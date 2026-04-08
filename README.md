@@ -9,7 +9,7 @@ A simple command-line chatbot that uses the Groq API to generate short pirate-st
 
 ```bash
 pip install cmc-csci005-alejandro
+```
 
-## PyPI
-
+### PyPI
 https://pypi.org/project/cmc-csci005-alejandro/
