@@ -14,6 +14,8 @@ jobs:
           pip install .
 
       - name: Run integration test
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           chat <<'EOF'
           I am bob.
