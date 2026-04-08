@@ -1,0 +1,23 @@
+name: Run Doctests
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest coverage python-dotenv groq
+
+      - name: Run tests
+        run: |
+          pytest chat.py --doctest-modules
