@@ -9,7 +9,7 @@ from tools.cat import cat, tool_schema as cat_schema
 from tools.grep import grep, tool_schema as grep_schema
 import json
 from dotenv import load_dotenv
-import builtins
+
 
 load_dotenv()
 
@@ -226,7 +226,7 @@ def repl(temperature=0.8):
     ...
     <BLANKLINE>
     """
-    import readline
+
     chat = Chat()
     try:
         while True:
