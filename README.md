@@ -1,8 +1,6 @@
-# Chat CLI with Tool Use
+# Command-Line AI Agent with Tool Integration
 
-This project implements a command-line chat agent that interacts with a language model and supports tool use for working with files and performing calculations.
-
-The system allows both natural language interaction and explicit slash commands for direct tool execution.
+This project provides a command-line chat agent that integrates with a language model and supports tool-based interactions for file operations and calculations. Users can interact using natural language or explicit slash commands, with tab completion enhancing usability and efficiency.
 
 
 ## Badges
@@ -65,7 +63,6 @@ You can pass a message directly:
 
 ```bash
 chat "what files are in the .github folder?"
-[tool] /ls .github
 The only file in this folder is the workflows subfolder.
 ...
 ```
@@ -87,6 +84,18 @@ Supported providers:
 - openai
 - anthropic
 - google
+
+### Debug Mode
+
+Prints out tool use calls.
+
+```bash
+chat --debug
+
+chat> what files are in the .github folder?
+[tool] /ls .github
+The only file in this folder is the workflows subfolder.
+```
 
 ## Usage Examples
 
@@ -130,3 +139,9 @@ This project contains the files for a personal website, including HTML and relat
 
 ```
 This example is useful because it demonstrates that the agent can interpret non-Python projects using file inspection.
+
+## Safety
+
+- Tools are restricted to the current directory  
+- Absolute paths are not allowed  
+- Directory traversal (`..`) is blocked  
