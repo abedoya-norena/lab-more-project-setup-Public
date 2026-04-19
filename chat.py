@@ -6,6 +6,8 @@ This file defines the Chat class and REPL interface for interacting with the lan
 """
 
 import argparse
+import os
+import readline
 from groq import Groq
 from tools.calculate import calculate, tool_schema as calculate_schema
 from tools.ls import ls, tool_schema as ls_schema
@@ -263,6 +265,24 @@ def repl(temperature=0.8, debug=False, provider="groq"):
     ...
     <BLANKLINE>
     """
+
+    commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help"]
+
+    def completer(text, state):
+        line = readline.get_line_buffer()
+        if not line.startswith("/"):
+            matches = []
+        elif " " not in line:
+            matches = [cmd for cmd in commands if cmd.startswith(text)]
+        else:
+            arg = line.rsplit(" ", 1)[-1]
+            matches = [name for name in os.listdir(".") if name.startswith(arg)]
+        return matches[state] if state < len(matches) else None
+
+
+    readline.set_completer_delims(" \t\n")
+    readline.set_completer(completer)
+    readline.parse_and_bind("tab: complete")
 
     chat = Chat(debug=debug, provider=provider)
     try:
