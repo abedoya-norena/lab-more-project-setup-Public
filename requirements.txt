@@ -2,3 +2,5 @@ groq
 python-dotenv
 gitpython
 openai
+sounddevice
+soundfile

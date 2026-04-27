@@ -19,6 +19,7 @@ from tools.write_files import write_files, tool_schema as write_files_schema
 from tools.rm import rm, tool_schema as rm_schema
 from tools.pip_install import pip_install, tool_schema as pip_install_schema
 from tools.load_image import load_image, tool_schema as load_image_schema
+from tools.tts import speak
 import json
 from dotenv import load_dotenv
 
@@ -244,7 +245,7 @@ def completer(text, state, commands=None, line=None):
     return matches[state] if state < len(matches) else None
 
 
-def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
+def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, voice="Fritz-PlayAI"):
     """Run an interactive command-line chat loop that supports both natural language and slash commands.
 
     Slash commands run tools directly without an LLM call, giving instant deterministic output.
@@ -450,6 +451,8 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
 
             response = chat.send_message(user_input, temperature)
             print(response)
+            if tts:
+                speak(response, voice=voice)
     except (KeyboardInterrupt, EOFError):
         print()
 
@@ -460,6 +463,10 @@ if __name__ == '__main__':
     parser.add_argument("--provider", default="groq")
     parser.add_argument("--no-ralph", action="store_true", default=False,
                         help="Disable the Ralph Wiggum doctest retry loop")
+    parser.add_argument("--tts", action="store_true", default=False,
+                        help="Read responses aloud using Groq TTS")
+    parser.add_argument("--voice", default="Fritz-PlayAI",
+                        help="Groq TTS voice (default: Fritz-PlayAI)")
     parser.add_argument("message", nargs="*", help="Optional message")
 
     args = parser.parse_args()
@@ -472,6 +479,10 @@ if __name__ == '__main__':
     if args.message:
         chat = Chat(debug=args.debug, provider=args.provider, ralph=ralph)
         load_agents_md(chat)
-        print(chat.send_message(" ".join(args.message)))
+        response = chat.send_message(" ".join(args.message))
+        print(response)
+        if args.tts:
+            speak(response, voice=args.voice)
     else:
-        repl(debug=args.debug, provider=args.provider, ralph=ralph)
+        repl(debug=args.debug, provider=args.provider, ralph=ralph,
+             tts=args.tts, voice=args.voice)

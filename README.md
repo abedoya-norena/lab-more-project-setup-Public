@@ -128,6 +128,34 @@ This example is useful because it demonstrates that the agent can interpret non-
 
 <!-- I removed the safety and the features section because they read like AI slop; if you actually want to talk about those features, you do it with the examples -->
 
+## Text-to-Speech
+
+Pass `--tts` to have every response read aloud using the Groq TTS API.
+An optional `--voice` flag selects the voice (default: `Fritz-PlayAI`).
+
+```
+$ chat --tts
+chat> What is 2 + 2?
+The answer be 4, arr!    ← printed and spoken aloud
+```
+
+```
+$ chat --tts --voice Celeste-PlayAI
+chat> Tell me a pirate joke
+Why be pirates called pirates? Because they ARRRR!
+```
+
+Available voices include: `Fritz-PlayAI`, `Celeste-PlayAI`, `Briggs-PlayAI`, `Thunder-PlayAI`, and [many others](https://console.groq.com/docs/text-to-speech).
+
+Playback requires `sounddevice` and `soundfile` (`pip install sounddevice soundfile`).
+On Linux you may also need `sudo apt-get install libportaudio2`.
+
+### Demo video
+
+https://github.com/user-attachments/assets/PLACEHOLDER
+
+> Replace the placeholder above with your recorded demo video after uploading it to this GitHub repo.
+
 ## Agent Examples: File Operations and Git History
 
 The examples below demonstrate that docchat can create, modify, and delete files, and that each change is automatically committed to git.
