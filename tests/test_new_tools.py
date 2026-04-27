@@ -52,7 +52,7 @@ def test_write_file_non_python(git_repo, monkeypatch):
     repo, tmp_path = git_repo
     monkeypatch.chdir(tmp_path)
 
-    result = write_file("readme.txt", "hello", "add readme")
+    result = write_file("readme.txt", "add readme", contents="hello")
     assert "Wrote 1 file(s)" in result
     assert "Doctest" not in result
 
@@ -62,9 +62,39 @@ def test_write_file_python_runs_doctests(git_repo, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
     content = 'def add(a, b):\n    """\n    >>> add(1, 2)\n    3\n    """\n    return a + b\n'
-    result = write_file("math_tool.py", content, "add math_tool")
+    result = write_file("math_tool.py", "add math_tool", contents=content)
     assert "Wrote 1 file(s)" in result
     assert "Doctest results" in result
+
+
+def test_write_file_diff_patches_existing(git_repo, monkeypatch):
+    repo, tmp_path = git_repo
+    monkeypatch.chdir(tmp_path)
+
+    write_files([{"path": "data.txt", "contents": "a\nb\nc\n"}], "init")
+    diff = "@@ -1,3 +1,3 @@\n a\n-b\n+B\n c\n"
+    result = write_file("data.txt", "patch data", diff=diff)
+    assert "Wrote 1 file(s)" in result
+    assert open(tmp_path / "data.txt").read() == "a\nB\nc\n"
+
+
+def test_write_file_diff_wrong_line_numbers(git_repo, monkeypatch):
+    repo, tmp_path = git_repo
+    monkeypatch.chdir(tmp_path)
+
+    write_files([{"path": "code.txt", "contents": "x\ny\nz\n"}], "init")
+    diff = "@@ -99,3 +99,3 @@\n x\n-y\n+Y\n z\n"
+    result = write_file("code.txt", "fuzzy patch", diff=diff)
+    assert "Wrote 1 file(s)" in result
+    assert open(tmp_path / "code.txt").read() == "x\nY\nz\n"
+
+
+def test_write_file_missing_contents_and_diff(git_repo, monkeypatch):
+    repo, tmp_path = git_repo
+    monkeypatch.chdir(tmp_path)
+
+    result = write_file("any.txt", "msg")
+    assert "Error" in result
 
 
 def test_rm_removes_file_and_commits(git_repo, monkeypatch):
