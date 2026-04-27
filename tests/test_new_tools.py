@@ -1,6 +1,8 @@
-"""Tests for the project 4 tools: write_files, write_file, rm, run_doctests."""
+"""Tests for the project 4 tools: write_files, write_file, rm, run_doctests, load_image."""
 
 import os
+import struct
+import zlib
 import git
 import pytest
 
@@ -8,6 +10,18 @@ from tools.write_files import write_files
 from tools.write_file import write_file
 from tools.rm import rm
 from tools.doctests import run_doctests
+from tools.load_image import load_image
+
+
+def _make_png():
+    """Return bytes for a minimal 1x1 white RGB PNG."""
+    def chunk(tag, data):
+        buf = tag + data
+        return struct.pack('>I', len(data)) + buf + struct.pack('>I', zlib.crc32(buf) & 0xffffffff)
+
+    ihdr = struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0)
+    idat = zlib.compress(b'\x00\xff\xff\xff')
+    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', idat) + chunk(b'IEND', b'')
 
 
 @pytest.fixture
@@ -123,3 +137,37 @@ def test_run_doctests_on_real_file(monkeypatch):
     monkeypatch.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     result = run_doctests("tools/calculate.py")
     assert "passed" in result and "calculate" in result
+
+
+def test_load_image_returns_data_url(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "photo.png").write_bytes(_make_png())
+    result = load_image("photo.png")
+    assert result.startswith("data:image/png;base64,")
+
+
+def test_load_image_jpeg(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # Minimal valid JPEG: SOI + EOI markers
+    (tmp_path / "img.jpg").write_bytes(b'\xff\xd8\xff\xd9')
+    result = load_image("img.jpg")
+    assert result.startswith("data:image/jpeg;base64,")
+
+
+def test_load_image_unsafe_path(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert load_image("/etc/passwd") == "Error: unsafe path"
+    assert load_image("../secret.png") == "Error: unsafe path"
+
+
+def test_load_image_missing_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = load_image("ghost.png")
+    assert result == "Error: file not found"
+
+
+def test_load_image_wrong_type(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "doc.txt").write_text("hello")
+    result = load_image("doc.txt")
+    assert result.startswith("Error: unsupported image type")

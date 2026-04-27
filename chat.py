@@ -18,6 +18,7 @@ from tools.write_file import write_file, tool_schema as write_file_schema
 from tools.write_files import write_files, tool_schema as write_files_schema
 from tools.rm import rm, tool_schema as rm_schema
 from tools.pip_install import pip_install, tool_schema as pip_install_schema
+from tools.load_image import load_image, tool_schema as load_image_schema
 import json
 from dotenv import load_dotenv
 
@@ -27,7 +28,7 @@ load_dotenv()
 TOOLS = [
     calculate_schema, ls_schema, cat_schema, grep_schema, compact_schema,
     doctests_schema, write_file_schema, write_files_schema, rm_schema,
-    pip_install_schema,
+    pip_install_schema, load_image_schema,
 ]
 
 AVAILABLE_FUNCTIONS = {
@@ -41,6 +42,7 @@ AVAILABLE_FUNCTIONS = {
     "write_files": write_files,
     "rm": rm,
     "pip_install": pip_install,
+    "load_image": load_image,
 }
 
 
@@ -133,6 +135,7 @@ class Chat:
 
             compacted_summary = None
             doctest_failed = False
+            images_to_inject = []
 
             for tool_call in tool_calls:
                 function_name = tool_call.function.name
@@ -149,6 +152,20 @@ class Chat:
                     compacted_summary = function_response
                     continue
 
+                if function_name == "load_image":
+                    if function_response.startswith("Error"):
+                        tool_content = function_response
+                    else:
+                        images_to_inject.append(function_response)
+                        tool_content = f"Image '{function_args.get('path', '')}' loaded into context."
+                    self.messages.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": tool_content,
+                    })
+                    continue
+
                 self.messages.append({
                     "tool_call_id": tool_call.id,
                     "role": "tool",
@@ -158,6 +175,12 @@ class Chat:
 
                 if self.ralph and "Test Failed" in function_response:
                     doctest_failed = True
+
+            for url in images_to_inject:
+                self.messages.append({
+                    "role": "user",
+                    "content": [{"type": "image_url", "image_url": {"url": url}}],
+                })
 
             if compacted_summary is not None:
                 return compacted_summary
@@ -208,7 +231,7 @@ def completer(text, state, commands=None, line=None):
     """
     if commands is None:
         commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help",
-                    "/doctests", "/rm", "/pip_install"]
+                    "/doctests", "/rm", "/pip_install", "/load_image"]
     if line is None:
         line = readline.get_line_buffer() if readline else ""
     if not line.startswith("/"):
@@ -300,7 +323,7 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
         return
 
     commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help",
-                "/doctests", "/rm", "/pip_install"]
+                "/doctests", "/rm", "/pip_install", "/load_image"]
 
     if readline:
         readline.set_completer_delims(" \t\n")
@@ -316,7 +339,7 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
 
             if user_input.startswith("/"):
                 if user_input == "/help":
-                    print("Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>")
+                    print("Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>, /load_image <path>")
 
                 elif user_input.startswith("/ls"):
                     parts = user_input.split()
@@ -402,6 +425,23 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
                         result = pip_install(parts[1])
                         print(result)
                         chat.messages.append({"role": "assistant", "content": result})
+
+                elif user_input.startswith("/load_image"):
+                    parts = user_input.split(maxsplit=1)
+                    if len(parts) < 2:
+                        print("Usage: /load_image <path>")
+                    else:
+                        if debug:
+                            print(f"[tool] /load_image {parts[1]}", flush=True)
+                        result = load_image(parts[1])
+                        if result.startswith("Error"):
+                            print(result)
+                        else:
+                            chat.messages.append({
+                                "role": "user",
+                                "content": [{"type": "image_url", "image_url": {"url": result}}],
+                            })
+                            print(f"Image '{parts[1]}' loaded into context.")
 
                 else:
                     print("Unknown command")
