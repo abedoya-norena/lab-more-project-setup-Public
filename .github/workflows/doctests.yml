@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest coverage python-dotenv groq gitpython openai
+          pip install pytest coverage python-dotenv groq gitpython openai numpy sounddevice soundfile pynput
 
       - name: Run doctests with coverage
         env:

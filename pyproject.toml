@@ -12,6 +12,12 @@ requires-python = ">=3.8"
 dependencies = [
     "groq",
     "python-dotenv",
+    "gitpython",
+    "openai",
+    "numpy",
+    "sounddevice",
+    "soundfile",
+    "pynput",
 ]
 
 [tool.setuptools]
