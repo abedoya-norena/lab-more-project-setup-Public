@@ -175,6 +175,31 @@ Hold SPACE → speak → release → Whisper transcribes → LLM responds → TT
 Requires `sounddevice`, `soundfile`, `numpy`, and `pynput` (all in `requirements.txt`).
 On Linux you may also need `sudo apt-get install libportaudio2`.
 
+### Trigger-word mode (always-on)
+
+Pass `--trigger "hey chat"` (or any phrase you prefer) for hands-free operation.
+The microphone is always open, but Groq Whisper is only called when actual speech is
+detected — silence is filtered out locally using energy-based voice activity detection
+so API costs stay low.
+
+```
+$ chat --trigger "hey chat" --tts
+[listening for 'hey chat'...]
+                                    ← say nothing, no API calls
+hey chat, what time is it?          ← trigger detected
+chat> [● triggered! speak your query...]
+what is the weather like?           ← query captured
+chat> I cannot check live weather, arr, but I can help with other tasks!
+                                    ← answer also spoken aloud
+[listening for 'hey chat'...]       ← back to listening
+```
+
+You can use any trigger phrase:
+
+```
+$ chat --trigger "okay docchat"
+```
+
 ### Demo video
 
 https://github.com/user-attachments/assets/PLACEHOLDER

@@ -1,9 +1,13 @@
-"""Speech-to-text: record audio while SPACE is held, transcribe with Groq Whisper.
+"""Speech-to-text: two input modes, both transcribe via Groq Whisper.
 
-Hold SPACE → audio is captured via sounddevice.
-Release SPACE → recording stops, audio is sent to Groq Whisper, text is returned.
+Keypress mode (--stt):
+  Hold SPACE to record, release to transcribe and send.
 
-Usage in the REPL:  run chat.py with --stt
+Trigger-word mode (--trigger "hey chat"):
+  Always-on microphone.  Local energy-based VAD detects speech segments
+  without API calls.  When a segment's transcript contains the trigger phrase,
+  the next speech segment is captured and returned as the query.
+  Whisper is called only on actual speech — never on silence.
 
 Requires:
     pip install sounddevice soundfile numpy pynput
@@ -20,7 +24,72 @@ import sounddevice as sd
 import soundfile as sf
 from groq import Groq
 
-SAMPLE_RATE = 16000  # Hz — Whisper is optimised for 16 kHz mono
+SAMPLE_RATE = 16000        # Hz — Whisper is optimised for 16 kHz mono
+CHUNK_FRAMES = 512         # ~32 ms per VAD chunk at 16 kHz
+SPEECH_THRESHOLD = 0.015   # RMS energy above this = speech
+PRE_ROLL_CHUNKS = 6        # ~200 ms of audio kept before speech onset
+POST_SILENCE_CHUNKS = 22   # ~700 ms of silence ends the segment
+
+
+def _rms(chunk):
+    """Root-mean-square energy of an audio chunk.
+
+    >>> import numpy as np
+    >>> _rms(np.array([[0.0], [0.0], [0.0]]))
+    0.0
+
+    >>> round(_rms(np.array([[1.0], [-1.0], [1.0], [-1.0]])), 4)
+    1.0
+    """
+    return float(np.sqrt(np.mean(chunk ** 2)))
+
+
+def _record_speech_segment():
+    """Block until a speech segment ends; return the captured audio array.
+
+    Uses local RMS energy as VAD — no API calls.  Keeps a short pre-roll
+    buffer so the very beginning of speech is not clipped.
+    """
+    pre_roll = []
+    frames = []
+    silent_streak = 0
+    in_speech = False
+
+    with sd.InputStream(samplerate=SAMPLE_RATE, channels=1,
+                        dtype='float32', blocksize=CHUNK_FRAMES) as stream:
+        while True:
+            chunk, _ = stream.read(CHUNK_FRAMES)
+            energy = _rms(chunk)
+
+            if not in_speech:
+                pre_roll.append(chunk.copy())
+                if len(pre_roll) > PRE_ROLL_CHUNKS:
+                    pre_roll.pop(0)
+                if energy > SPEECH_THRESHOLD:
+                    in_speech = True
+                    frames.extend(pre_roll)
+                    pre_roll = []
+            else:
+                frames.append(chunk.copy())
+                if energy < SPEECH_THRESHOLD:
+                    silent_streak += 1
+                    if silent_streak >= POST_SILENCE_CHUNKS:
+                        break
+                else:
+                    silent_streak = 0
+
+    return np.concatenate(frames)
+
+
+def _wav_transcribe(audio):
+    """Save a numpy audio array to a temp WAV and transcribe with Groq Whisper."""
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+        tmp_path = f.name
+    try:
+        sf.write(tmp_path, audio, SAMPLE_RATE)
+        return transcribe(tmp_path)
+    finally:
+        os.unlink(tmp_path)
 
 
 def transcribe(audio_path):
@@ -80,7 +149,7 @@ def listen():
     def _on_release(key):
         if key == kb.Key.space and started.is_set():
             done.set()
-            return False  # stops the listener thread
+            return False
 
     try:
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=1,
@@ -102,19 +171,62 @@ def listen():
         return ""
 
     audio = np.concatenate(frames)
-
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
-        tmp_path = f.name
     try:
-        sf.write(tmp_path, audio, SAMPLE_RATE)
-        text = transcribe(tmp_path)
+        text = _wav_transcribe(audio)
     except Exception as e:
         print(f"\n[stt] transcription error: {e}", file=sys.stderr)
         text = ""
-    finally:
-        os.unlink(tmp_path)
 
-    # Overwrite the status line with the transcribed text
     sys.stdout.write(f"\rchat> {text}\n")
     sys.stdout.flush()
     return text
+
+
+def listen_trigger(trigger="hey chat"):
+    """Always-on trigger-word mode: return the next query after the trigger is spoken.
+
+    Algorithm
+    ---------
+    Loop forever:
+      1. _record_speech_segment() blocks (no API) until a speech segment ends.
+      2. Transcribe the segment with Groq Whisper.
+      3. If the transcript contains the trigger phrase → beep, record the next
+         speech segment, transcribe it, print it, and return it as the query.
+      4. Otherwise discard and go back to step 1.
+
+    Whisper is only invoked on actual speech, never on silence, so API costs
+    stay low even though the microphone is always open.
+
+    >>> 'hey chat' in 'hey chat how are you'
+    True
+    """
+    sys.stdout.write(f"[listening for '{trigger}'...]\n")
+    sys.stdout.flush()
+
+    while True:
+        try:
+            audio = _record_speech_segment()
+        except Exception as e:
+            print(f"[trigger] recording error: {e}", file=sys.stderr)
+            continue
+
+        try:
+            text = _wav_transcribe(audio)
+        except Exception as e:
+            print(f"[trigger] transcription error: {e}", file=sys.stderr)
+            continue
+
+        if trigger.lower() in text.lower():
+            sys.stdout.write("\rchat> [● triggered! speak your query...]\n")
+            sys.stdout.flush()
+
+            try:
+                query_audio = _record_speech_segment()
+                query = _wav_transcribe(query_audio)
+            except Exception as e:
+                print(f"[trigger] query error: {e}", file=sys.stderr)
+                continue
+
+            sys.stdout.write(f"chat> {query}\n")
+            sys.stdout.flush()
+            return query
