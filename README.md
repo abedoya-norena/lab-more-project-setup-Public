@@ -222,11 +222,21 @@ The demo below shows trigger-word detection followed by Whisper transcription an
 
 ## Autonomous Markdown Compiler (Extra Credit)
 
-The agent autonomously implemented a full Markdown-to-HTML compiler from scratch on a dedicated branch of a separate repository, making `[docchat]` commits for each change as proof of authorship.
+The agent autonomously completed the [markdown compiler assignment](https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents) on a dedicated branch containing only commits from the AI agent (all prefixed with `[docchat]`).
 
-**Repository:** [abedoya-norena/Markdown-to-HTML-compiler](https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents)
+The branch can be found here: **https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents**
 
-The agent implemented all required functions (`compile_headers`, `compile_italic_star`, `compile_italic_underscore`, `compile_strikethrough`, `compile_bold_stars`, `compile_bold_underscore`, `compile_code_inline`, `compile_links`, `compile_images`) and fixed all CI workflows (doctests, command-line, flake8) autonomously.
+The agent used the `write_file` tool to implement all required functions from scratch:
+
+- `compile_headers` — converts `#` markdown headers to `<h1>`–`<h6>` tags
+- `compile_italic_star` / `compile_italic_underscore` — converts `*italic*` and `_italic_` to `<i>`
+- `compile_bold_stars` / `compile_bold_underscore` — converts `**bold**` and `__bold__` to `<b>`
+- `compile_strikethrough` — converts `~~text~~` to `<ins>`
+- `compile_code_inline` — converts backtick code spans to `<code>`, escaping `<` and `>`
+- `compile_links` — converts `[text](url)` to `<a>` tags
+- `compile_images` — converts `![alt](url)` to `<img>` tags
+
+It also implemented `convert_file` in `__main__.py`, fixed the CI workflows (doctests, command-line, flake8), and updated all badge URLs — all autonomously without any human code edits.
 
 ## Agent Examples: File Operations and Git History
 
