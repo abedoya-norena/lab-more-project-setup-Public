@@ -73,7 +73,7 @@ class Chat:
 
     client = Groq()
 
-    def __init__(self, debug=False, provider="groq"):
+    def __init__(self, debug=False, provider="groq", ralph=True):
         """Initialize the chat with a default system prompt and empty message history."""
         self.provider = provider
         if provider == "groq":
@@ -93,6 +93,7 @@ class Chat:
         else:
             self.MODEL = "openai/gpt-oss-120b"
         self.debug = debug
+        self.ralph = ralph
         self.messages = [
             {
                 "role": "system",
@@ -101,27 +102,38 @@ class Chat:
         ]
 
     def send_message(self, message, temperature=0.8):
-        """Send a message to the language model, handle any tool calls, and return the model's response."""
+        """Send a message to the language model, handle any tool calls, and return the model's response.
+
+        When ralph=True (the default), any write_file call whose doctests fail causes the agent
+        to loop: the failure output is fed back as a user message and the model is asked to fix
+        the code and try again.  The loop repeats until doctests pass or the model stops calling
+        tools.
+        """
         self.messages.append({'role': 'user', 'content': message})
 
-        chat_completion = self.client.chat.completions.create(
-            messages=self.messages,
-            model=self.MODEL,
-            temperature=temperature,
-            seed=0,
-            tools=TOOLS,
-            tool_choice="auto",
-        )
+        while True:
+            response = self.client.chat.completions.create(
+                messages=self.messages,
+                model=self.MODEL,
+                temperature=temperature,
+                seed=0,
+                tools=TOOLS,
+                tool_choice="auto",
+            )
 
-        response_message = chat_completion.choices[0].message
-        tool_calls = response_message.tool_calls
+            response_message = response.choices[0].message
+            tool_calls = response_message.tool_calls
 
-        # Step 2: Check if the model wants to call tools
-        if tool_calls:
+            if not tool_calls:
+                result = response_message.content
+                self.messages.append({'role': 'assistant', 'content': result})
+                return result
+
             self.messages.append(response_message)
 
-            # Step 3: Execute each tool call
             compacted_summary = None
+            doctest_failed = False
+
             for tool_call in tool_calls:
                 function_name = tool_call.function.name
                 function_to_call = AVAILABLE_FUNCTIONS[function_name]
@@ -144,23 +156,19 @@ class Chat:
                     "content": function_response,
                 })
 
-            # Step 4: Get final response from model
+                if self.ralph and "Test Failed" in function_response:
+                    doctest_failed = True
+
             if compacted_summary is not None:
-                result = compacted_summary
-            else:
-                second_response = self.client.chat.completions.create(
-                    model=self.MODEL,
-                    messages=self.messages,
-                    tools=TOOLS,
-                    tool_choice="auto",
-                )
-                result = second_response.choices[0].message.content
-            if compacted_summary is None:
-                self.messages.append({'role': 'assistant', 'content': result})
-        else:
-            result = chat_completion.choices[0].message.content
-            self.messages.append({'role': 'assistant', 'content': result})
-        return result
+                return compacted_summary
+
+            if doctest_failed:
+                if self.debug:
+                    print("[ralph] doctests failed — asking model to fix and retry")
+                self.messages.append({
+                    "role": "user",
+                    "content": "The doctests failed. Please fix the code and try again.",
+                })
 
 
 def load_agents_md(chat):
@@ -213,7 +221,7 @@ def completer(text, state, commands=None, line=None):
     return matches[state] if state < len(matches) else None
 
 
-def repl(temperature=0.8, debug=False, provider="groq"):
+def repl(temperature=0.8, debug=False, provider="groq", ralph=True):
     """Run an interactive command-line chat loop that supports both natural language and slash commands.
 
     Slash commands run tools directly without an LLM call, giving instant deterministic output.
@@ -299,7 +307,7 @@ def repl(temperature=0.8, debug=False, provider="groq"):
         readline.set_completer(lambda text, state: completer(text, state, commands))
         readline.parse_and_bind("tab: complete")
 
-    chat = Chat(debug=debug, provider=provider)
+    chat = Chat(debug=debug, provider=provider, ralph=ralph)
     load_agents_md(chat)
 
     try:
@@ -410,17 +418,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=False)
     parser.add_argument("--provider", default="groq")
+    parser.add_argument("--no-ralph", action="store_true", default=False,
+                        help="Disable the Ralph Wiggum doctest retry loop")
     parser.add_argument("message", nargs="*", help="Optional message")
 
     args = parser.parse_args()
+    ralph = not args.no_ralph
 
     if not os.path.exists('.git'):
         print("Error: not a git repository. Please run chat from within a git repo.")
         sys.exit(1)
 
     if args.message:
-        chat = Chat(debug=args.debug, provider=args.provider)
+        chat = Chat(debug=args.debug, provider=args.provider, ralph=ralph)
         load_agents_md(chat)
         print(chat.send_message(" ".join(args.message)))
     else:
-        repl(debug=args.debug, provider=args.provider)
+        repl(debug=args.debug, provider=args.provider, ralph=ralph)

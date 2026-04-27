@@ -57,6 +57,36 @@ def test_send_message_compact_tool_call_debug(monkeypatch, capsys):
     assert chat_instance.messages == [{"role": "system", "content": result}]
 
 
+def test_ralph_wiggum_retries_on_doctest_failure(monkeypatch, capsys):
+    """Ralph loop: when write_file returns a doctest failure, send_message loops and retries."""
+    chat_instance = chat.Chat(debug=True, ralph=True)
+
+    fail_response = "Wrote 1 file(s)\n\nDoctest results:\n***Test Failed*** 1 failures."
+    ok_response = "Wrote 1 file(s)\n\nDoctest results:\n1 items passed all tests."
+    text_response = types.SimpleNamespace(tool_calls=None, content="fixed it, arr")
+
+    calls = [
+        _response_with_tool_calls([_ToolCall("write_file", '{"path":"f.py","contents":"","commit_message":"c"}')]),
+        _response_with_tool_calls([_ToolCall("write_file", '{"path":"f.py","contents":"fixed","commit_message":"c"}')]),
+        types.SimpleNamespace(choices=[types.SimpleNamespace(message=text_response)]),
+    ]
+
+    def fake_create(**kwargs):
+        return calls.pop(0)
+
+    monkeypatch.setattr(chat_instance.client.chat.completions, "create", fake_create)
+    monkeypatch.setitem(chat.AVAILABLE_FUNCTIONS, "write_file",
+                        lambda path, contents, commit_message:
+                            fail_response if contents == "" else ok_response)
+
+    result = chat_instance.send_message("write a python file", temperature=0.0)
+    output = capsys.readouterr().out
+
+    assert "[ralph] doctests failed" in output
+    assert result == "fixed it, arr"
+    assert len(calls) == 0
+
+
 def test_repl_slash_command_branches_with_debug(monkeypatch, capsys):
     inputs = iter(
         [
