@@ -17,6 +17,7 @@ from tools.doctests import run_doctests, tool_schema as doctests_schema
 from tools.write_file import write_file, tool_schema as write_file_schema
 from tools.write_files import write_files, tool_schema as write_files_schema
 from tools.rm import rm, tool_schema as rm_schema
+from tools.pip_install import pip_install, tool_schema as pip_install_schema
 import json
 from dotenv import load_dotenv
 
@@ -26,6 +27,7 @@ load_dotenv()
 TOOLS = [
     calculate_schema, ls_schema, cat_schema, grep_schema, compact_schema,
     doctests_schema, write_file_schema, write_files_schema, rm_schema,
+    pip_install_schema,
 ]
 
 AVAILABLE_FUNCTIONS = {
@@ -38,6 +40,7 @@ AVAILABLE_FUNCTIONS = {
     "write_file": write_file,
     "write_files": write_files,
     "rm": rm,
+    "pip_install": pip_install,
 }
 
 
@@ -197,7 +200,7 @@ def completer(text, state, commands=None, line=None):
     """
     if commands is None:
         commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help",
-                    "/doctests", "/rm"]
+                    "/doctests", "/rm", "/pip_install"]
     if line is None:
         line = readline.get_line_buffer() if readline else ""
     if not line.startswith("/"):
@@ -279,7 +282,7 @@ def repl(temperature=0.8, debug=False, provider="groq"):
     >>> builtins.input = monkey_input
     >>> repl(temperature=0.0)  # doctest: +ELLIPSIS
     chat> /help
-    Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>
+    Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>
     chat> Goodbye.
     ...
     <BLANKLINE>
@@ -289,7 +292,7 @@ def repl(temperature=0.8, debug=False, provider="groq"):
         return
 
     commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help",
-                "/doctests", "/rm"]
+                "/doctests", "/rm", "/pip_install"]
 
     if readline:
         readline.set_completer_delims(" \t\n")
@@ -305,7 +308,7 @@ def repl(temperature=0.8, debug=False, provider="groq"):
 
             if user_input.startswith("/"):
                 if user_input == "/help":
-                    print("Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>")
+                    print("Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>")
 
                 elif user_input.startswith("/ls"):
                     parts = user_input.split()
@@ -378,6 +381,17 @@ def repl(temperature=0.8, debug=False, provider="groq"):
                         if debug:
                             print(f"[tool] /rm {parts[1]}", flush=True)
                         result = rm(parts[1])
+                        print(result)
+                        chat.messages.append({"role": "assistant", "content": result})
+
+                elif user_input.startswith("/pip_install"):
+                    parts = user_input.split(maxsplit=1)
+                    if len(parts) < 2:
+                        print("Usage: /pip_install <library_name>")
+                    else:
+                        if debug:
+                            print(f"[tool] /pip_install {parts[1]}", flush=True)
+                        result = pip_install(parts[1])
                         print(result)
                         chat.messages.append({"role": "assistant", "content": result})
 
