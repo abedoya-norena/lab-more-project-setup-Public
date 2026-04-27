@@ -19,10 +19,11 @@ import sys
 import tempfile
 import threading
 
-import numpy as np
-import sounddevice as sd
-import soundfile as sf
 from groq import Groq
+
+# sounddevice / soundfile / numpy are imported lazily inside functions so that
+# chat.py can be imported (and doctests run) even when the audio libraries are
+# not installed in the environment.
 
 SAMPLE_RATE = 16000        # Hz — Whisper is optimised for 16 kHz mono
 CHUNK_FRAMES = 512         # ~32 ms per VAD chunk at 16 kHz
@@ -41,6 +42,7 @@ def _rms(chunk):
     >>> round(_rms(np.array([[1.0], [-1.0], [1.0], [-1.0]])), 4)
     1.0
     """
+    import numpy as np
     return float(np.sqrt(np.mean(chunk ** 2)))
 
 
@@ -50,6 +52,9 @@ def _record_speech_segment():
     Uses local RMS energy as VAD — no API calls.  Keeps a short pre-roll
     buffer so the very beginning of speech is not clipped.
     """
+    import numpy as np
+    import sounddevice as sd
+
     pre_roll = []
     frames = []
     silent_streak = 0
@@ -83,6 +88,7 @@ def _record_speech_segment():
 
 def _wav_transcribe(audio):
     """Save a numpy audio array to a temp WAV and transcribe with Groq Whisper."""
+    import soundfile as sf
     with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
         tmp_path = f.name
     try:
@@ -131,6 +137,9 @@ def listen():
 
     sys.stdout.write("chat> [Hold SPACE to speak]")
     sys.stdout.flush()
+
+    import numpy as np
+    import sounddevice as sd
 
     frames = []
     started = threading.Event()
