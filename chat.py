@@ -315,7 +315,7 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, v
     >>> builtins.input = monkey_input
     >>> repl(temperature=0.0)  # doctest: +ELLIPSIS
     chat> /help
-    Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>
+    Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>, /load_image <path>
     chat> Goodbye.
     ...
     <BLANKLINE>
