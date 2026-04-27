@@ -2,7 +2,7 @@ name: Run Doctests
 
 on:
   push:
-    branches: [ main ]
+    branches: ['*']
 
 jobs:
   test:
