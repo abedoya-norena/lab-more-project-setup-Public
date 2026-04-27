@@ -30,6 +30,8 @@ $ export OPENROUTER_API_KEY=your_key_here
 
 ## Usage
 
+![Demo](demo.gif)
+
 Run the agent in interactive mode:
 
 ```bash
@@ -163,8 +165,6 @@ Playback requires `sounddevice` and `soundfile` (`pip install sounddevice soundf
 On Linux you may also need `sudo apt-get install libportaudio2`.
 
 The demo below shows a full TTS session — every response is read aloud automatically.
-
-![TTS Demo](demo.gif)
 
 ## Speech-to-Text (Voice Input)
 
