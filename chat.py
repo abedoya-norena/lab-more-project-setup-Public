@@ -90,12 +90,16 @@ class Chat:
             )
         if provider == "openai":
             self.MODEL = "openai/gpt-4o"
+            self.VISION_MODEL = "openai/gpt-4o"
         elif provider == "anthropic":
             self.MODEL = "anthropic/claude-opus-4-5"
+            self.VISION_MODEL = "anthropic/claude-opus-4-5"
         elif provider == "google":
             self.MODEL = "google/gemini-2.0-flash-001"
+            self.VISION_MODEL = "google/gemini-2.0-flash-001"
         else:
             self.MODEL = "openai/gpt-oss-120b"
+            self.VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
         self.debug = debug
         self.ralph = ralph
         self.messages = [
@@ -116,9 +120,14 @@ class Chat:
         self.messages.append({'role': 'user', 'content': message})
 
         while True:
+            has_images = any(
+                isinstance(m, dict) and isinstance(m.get("content"), list)
+                for m in self.messages
+            )
+            model = self.VISION_MODEL if has_images else self.MODEL
             response = self.client.chat.completions.create(
                 messages=self.messages,
-                model=self.MODEL,
+                model=model,
                 temperature=temperature,
                 seed=0,
                 tools=TOOLS,
@@ -246,7 +255,7 @@ def completer(text, state, commands=None, line=None):
     return matches[state] if state < len(matches) else None
 
 
-def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, voice="Fritz-PlayAI", stt=False, trigger=None):
+def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, voice="daniel", stt=False, trigger=None):
     """Run an interactive command-line chat loop that supports both natural language and slash commands.
 
     Slash commands run tools directly without an LLM call, giving instant deterministic output.
@@ -471,8 +480,8 @@ if __name__ == '__main__':
                         help="Disable the Ralph Wiggum doctest retry loop")
     parser.add_argument("--tts", action="store_true", default=False,
                         help="Read responses aloud using Groq TTS")
-    parser.add_argument("--voice", default="Fritz-PlayAI",
-                        help="Groq TTS voice (default: Fritz-PlayAI)")
+    parser.add_argument("--voice", default="daniel",
+                        help="Groq TTS voice (default: daniel)")
     parser.add_argument("--stt", action="store_true", default=False,
                         help="Accept voice input: hold SPACE to record, release to transcribe")
     parser.add_argument("--trigger", metavar="PHRASE", default=None,

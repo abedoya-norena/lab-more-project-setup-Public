@@ -220,9 +220,9 @@ The demo below shows trigger-word detection followed by Whisper transcription an
 
 ![STT + Trigger Word Demo](Demo_STT.gif)
 
-## Autonomous Markdown Compiler (Extra Credit)
+## Autonomous Markdown Compiler
 
-The agent autonomously completed the [markdown compiler assignment](https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents) on a dedicated branch containing only commits from the AI agent (all prefixed with `[docchat]`).
+The agent autonomously completed a [Markdown-to-HTML compiler](https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents) on a dedicated branch containing only commits from the AI agent (all prefixed with `[docchat]`).
 
 The branch can be found here: **https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents**
 

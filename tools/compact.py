@@ -29,14 +29,13 @@ def _clean_messages(messages):
 def compact(messages):
     """Summarize a conversation history into 1-5 concise lines.
 
-    Because compact calls the LLM, the output is nondeterministic.
-    The schema name identifies this tool to the model.
+    Internally serializes the message list with _clean_messages, sends it to
+    the LLM, and returns the summary string.  Because the LLM is
+    nondeterministic, the output is not fixed; the helper _clean_messages is
+    fully tested above.
 
-    >>> tool_schema["function"]["name"]
-    'compact'
-
-    >>> tool_schema["function"]["parameters"]["required"]
-    []
+    >>> _clean_messages([{"role": "user", "content": "ping"}])
+    [{'role': 'user', 'content': 'ping'}]
     """
     from chat import Chat
 

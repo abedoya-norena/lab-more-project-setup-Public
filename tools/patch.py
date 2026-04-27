@@ -23,6 +23,16 @@ def _parse_hunks(diff_text):
 
     >>> _parse_hunks('--- a/f.py\\n+++ b/f.py\\n@@ -1 +1 @@\\n-a\\n+b\\n')
     [[('-', 'a'), ('+', 'b')]]
+
+    --- and +++ lines that appear inside a hunk (after @@) are skipped.
+
+    >>> _parse_hunks('@@ -1 +1 @@\\n--- a/f.py\\n+++ b/f.py\\n-x\\n+y\\n')
+    [[('-', 'x'), ('+', 'y')]]
+
+    Backslash continuation lines (e.g. \\ No newline at end of file) are skipped.
+
+    >>> _parse_hunks('@@ -1 +1 @@\\n-x\\n\\\\ No newline at end of file\\n+y\\n')
+    [[('-', 'x'), ('+', 'y')]]
     """
     hunks = []
     current = None
@@ -70,6 +80,11 @@ def _apply_hunk(file_lines, hunk):
 
     >>> _apply_hunk(['a', 'b', 'c'], [(' ', 'a'), ('-', 'b'), (' ', 'c')])
     ['a', 'c']
+
+    When the hunk has no context or removal lines, new lines are appended.
+
+    >>> _apply_hunk([], [('+', 'first'), ('+', 'second')])
+    ['first', 'second']
     """
     search = [line for tag, line in hunk if tag in (' ', '-')]
     replace = [line for tag, line in hunk if tag in (' ', '+')]

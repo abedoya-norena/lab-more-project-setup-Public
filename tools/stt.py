@@ -102,12 +102,15 @@ def transcribe(audio_path):
     """Send a WAV file to Groq Whisper and return the transcribed text string.
 
     The model used is whisper-large-v3-turbo (fast, accurate, multilingual).
+    Raises FileNotFoundError when the given path does not exist.
 
-    >>> SAMPLE_RATE
-    16000
+    >>> transcribe("nonexistent_file.wav")  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    FileNotFoundError: ...
     """
-    client = Groq()
     with open(audio_path, 'rb') as f:
+        client = Groq()
         result = client.audio.transcriptions.create(
             model="whisper-large-v3-turbo",
             file=f,
@@ -138,9 +141,6 @@ def listen():
     sys.stdout.write("chat> [Hold SPACE to speak]")
     sys.stdout.flush()
 
-    import numpy as np
-    import sounddevice as sd
-
     frames = []
     started = threading.Event()
     done = threading.Event()
@@ -161,12 +161,17 @@ def listen():
             return False
 
     try:
+        import numpy as np
+        import sounddevice as sd
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=1,
                             dtype='float32', callback=_audio_cb):
             listener = kb.Listener(on_press=_on_press, on_release=_on_release)
             listener.start()
             done.wait()
             listener.stop()
+    except OSError as e:
+        print(f"\n[stt] {e} — falling back to text input", file=sys.stderr)
+        return input("chat> ")
     except Exception as e:
         print(f"\n[stt] recording error: {e}", file=sys.stderr)
         return ""
@@ -191,6 +196,21 @@ def listen():
     return text
 
 
+def _trigger_matches(trigger, text):
+    """Return True when text contains the trigger phrase (case-insensitive).
+
+    >>> _trigger_matches('hey chat', 'Hey Chat, how are you?')
+    True
+
+    >>> _trigger_matches('hey chat', 'hello world')
+    False
+
+    >>> _trigger_matches('okay doc', 'OKAY DOC do something')
+    True
+    """
+    return trigger.lower() in text.lower()
+
+
 def listen_trigger(trigger="hey chat"):
     """Always-on trigger-word mode: return the next query after the trigger is spoken.
 
@@ -205,9 +225,8 @@ def listen_trigger(trigger="hey chat"):
 
     Whisper is only invoked on actual speech, never on silence, so API costs
     stay low even though the microphone is always open.
-
-    >>> 'hey chat' in 'hey chat how are you'
-    True
+    Trigger matching is case-insensitive; see _trigger_matches for examples.
+    This function requires a live microphone and cannot be run without audio hardware.
     """
     sys.stdout.write(f"[listening for '{trigger}'...]\n")
     sys.stdout.flush()
@@ -225,7 +244,7 @@ def listen_trigger(trigger="hey chat"):
             print(f"[trigger] transcription error: {e}", file=sys.stderr)
             continue
 
-        if trigger.lower() in text.lower():
+        if _trigger_matches(trigger, text):
             sys.stdout.write("\rchat> [● triggered! speak your query...]\n")
             sys.stdout.flush()
 

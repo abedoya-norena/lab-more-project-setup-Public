@@ -21,6 +21,9 @@ def write_file(path, commit_message, contents=None, diff=None):
 
     >>> write_file('f.txt', 'test')
     "Error: must provide 'contents' or 'diff'"
+
+    >>> write_file('nofile.txt', 'test', diff='@@ -1 +1 @@\\n-x\\n+y\\n')
+    "Error: cannot apply diff to 'nofile.txt': file not found"
     """
     if not is_path_safe(path):
         return f"Error: unsafe path '{path}'"

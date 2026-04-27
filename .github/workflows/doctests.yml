@@ -8,6 +8,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -32,3 +35,23 @@ jobs:
         run: |
           coverage run -m pytest chat.py tools/ --doctest-modules
           coverage report -m
+
+      - name: Update coverage badge in README
+        run: |
+          PCT=$(coverage report | tail -1 | awk '{print $NF}' | tr -d '%')
+          if [ "$PCT" -ge 90 ]; then
+            COLOR="brightgreen"
+          elif [ "$PCT" -ge 75 ]; then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          BADGE="![Coverage](https://img.shields.io/badge/coverage-${PCT}%25-${COLOR})"
+          sed -i "s|!\[Coverage\](https://img.shields.io/badge/coverage-[^)]*)|${BADGE}|" README.md
+
+      - name: Commit and push badge update
+        run: |
+          git add README.md
+          git diff --cached --quiet \
+            && echo "Coverage badge unchanged — nothing to commit." \
+            || (git commit -m "chore: update coverage badge [skip ci]" && git push)

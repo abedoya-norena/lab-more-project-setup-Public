@@ -22,6 +22,9 @@ def write_files(files, commit_message):
 
     >>> write_files([{'path': 'nofile.txt', 'diff': '@@ -1 +1 @@\\n-x\\n+y\\n'}], 't')
     "Error: cannot apply diff to 'nofile.txt': file not found"
+
+    >>> write_files([{'path': 'test.txt'}], 'msg')
+    "Error: file entry for 'test.txt' must have 'contents' or 'diff'"
     """
     resolved = []
     for f in files:
