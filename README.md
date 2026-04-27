@@ -1,8 +1,8 @@
 # Command-Line AI Agent with Tool Integration
 
-![Doctests](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/doctests.yml/badge.svg?branch=agents)
-![Integration](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/integration.yml/badge.svg?branch=agents)
-![Flake8](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/flake8.yml/badge.svg?branch=agents)
+![Doctests](https://github.com/abedoya-norena/lab-more-project-setup-Public/workflows/Run%20Doctests/badge.svg?branch=agents)
+![Integration](https://github.com/abedoya-norena/lab-more-project-setup-Public/workflows/integration/badge.svg?branch=agents)
+![Flake8](https://github.com/abedoya-norena/lab-more-project-setup-Public/workflows/flake8/badge.svg?branch=agents)
 ![PyPI](https://img.shields.io/pypi/v/cmc-csci005-alejandro)
 [![Coverage](https://codecov.io/gh/abedoya-norena/lab-more-project-setup-Public/branch/agents/graph/badge.svg)](https://codecov.io/gh/abedoya-norena/lab-more-project-setup-Public)
 
