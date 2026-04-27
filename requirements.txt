@@ -4,3 +4,5 @@ gitpython
 openai
 sounddevice
 soundfile
+numpy
+pynput

@@ -20,6 +20,7 @@ from tools.rm import rm, tool_schema as rm_schema
 from tools.pip_install import pip_install, tool_schema as pip_install_schema
 from tools.load_image import load_image, tool_schema as load_image_schema
 from tools.tts import speak
+from tools.stt import listen
 import json
 from dotenv import load_dotenv
 
@@ -245,7 +246,7 @@ def completer(text, state, commands=None, line=None):
     return matches[state] if state < len(matches) else None
 
 
-def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, voice="Fritz-PlayAI"):
+def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, voice="Fritz-PlayAI", stt=False):
     """Run an interactive command-line chat loop that supports both natural language and slash commands.
 
     Slash commands run tools directly without an LLM call, giving instant deterministic output.
@@ -336,7 +337,7 @@ def repl(temperature=0.8, debug=False, provider="groq", ralph=True, tts=False, v
 
     try:
         while True:
-            user_input = input('chat> ')
+            user_input = listen() if stt else input('chat> ')
 
             if user_input.startswith("/"):
                 if user_input == "/help":
@@ -467,6 +468,8 @@ if __name__ == '__main__':
                         help="Read responses aloud using Groq TTS")
     parser.add_argument("--voice", default="Fritz-PlayAI",
                         help="Groq TTS voice (default: Fritz-PlayAI)")
+    parser.add_argument("--stt", action="store_true", default=False,
+                        help="Accept voice input: hold SPACE to record, release to transcribe")
     parser.add_argument("message", nargs="*", help="Optional message")
 
     args = parser.parse_args()
@@ -485,4 +488,4 @@ if __name__ == '__main__':
             speak(response, voice=args.voice)
     else:
         repl(debug=args.debug, provider=args.provider, ralph=ralph,
-             tts=args.tts, voice=args.voice)
+             tts=args.tts, voice=args.voice, stt=args.stt)

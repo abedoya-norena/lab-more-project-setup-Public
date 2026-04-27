@@ -150,11 +150,37 @@ Available voices include: `Fritz-PlayAI`, `Celeste-PlayAI`, `Briggs-PlayAI`, `Th
 Playback requires `sounddevice` and `soundfile` (`pip install sounddevice soundfile`).
 On Linux you may also need `sudo apt-get install libportaudio2`.
 
+## Speech-to-Text (Voice Input)
+
+Pass `--stt` to speak your questions instead of typing them.
+
+```
+$ chat --stt
+chat> [Hold SPACE to speak]   ← hold spacebar
+chat> [● recording...]        ← recording in progress
+chat> [transcribing...]       ← Groq Whisper processing
+chat> what is the capital of France?
+The capital of France be Paris, arr!
+```
+
+Combine with `--tts` for a fully voice-driven conversation:
+
+```
+$ chat --stt --tts
+chat> [Hold SPACE to speak]
+```
+
+Hold SPACE → speak → release → Whisper transcribes → LLM responds → TTS reads the answer aloud.
+
+Requires `sounddevice`, `soundfile`, `numpy`, and `pynput` (all in `requirements.txt`).
+On Linux you may also need `sudo apt-get install libportaudio2`.
+
 ### Demo video
 
 https://github.com/user-attachments/assets/PLACEHOLDER
 
 > Replace the placeholder above with your recorded demo video after uploading it to this GitHub repo.
+> To upload: drag the video file into a GitHub issue or PR text box — GitHub returns a CDN URL you can paste here.
 
 ## Agent Examples: File Operations and Git History
 
