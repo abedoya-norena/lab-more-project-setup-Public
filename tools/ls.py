@@ -1,39 +1,28 @@
-"""
-This file defines the ls tool, which lists files in a directory and returns them as a sorted newline-separated string while preventing unsafe path access.
-"""
+"""This file defines the ls tool, which lists files in a directory and returns them as a sorted newline-separated string while preventing unsafe path access."""
 
 import glob
 import os
-
-def is_path_safe(path):
-    """
-    Check whether a file path is safe by rejecting absolute paths and directory traversal.
-
-    >>> is_path_safe("folder")
-    True
-
-    >>> is_path_safe("../secret")
-    False
-
-    >>> is_path_safe("/etc")
-    False
-    """
-    return not (path.startswith("/") or ".." in path)
+from tools.cat import is_path_safe
 
 
 def ls(path="."):
-    """
-    List files in a directory and return them as a sorted newline-separated string.
+    """List files in a directory and return them as a sorted newline-separated string.
 
-    >>> ls("../")
+    >>> ls('test_files')
+    'hello.txt\\nmultiline.txt\\nsubdir'
+
+    Returns an empty string when the directory does not exist.
+
+    >>> ls('nonexistent_dir_abc')
+    ''
+
+    Does not support absolute paths or directory traversal.
+
+    >>> ls('../')
     'Error: unsafe path'
 
-    # once again, gross test case
-    >>> isinstance(ls("nonexistent_dir_abc"), str)
-    True
-
-    >>> ls("nonexistent_dir_abc")
-    ''
+    >>> ls('/etc')
+    'Error: unsafe path'
     """
     if not is_path_safe(path):
         return "Error: unsafe path"

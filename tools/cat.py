@@ -1,10 +1,8 @@
-"""
-This file defines the cat tool, which reads the contents of a file and returns it as a string while preventing unsafe path access.
-"""
+"""This file defines the cat tool, which reads the contents of a file and returns it as a string while preventing unsafe path access."""
+
 
 def is_path_safe(path):
-    """
-    Check whether a file path is safe by rejecting absolute paths and directory traversal.
+    """Check whether a file path is safe by rejecting absolute paths and directory traversal.
 
     >>> is_path_safe("file.txt")
     True
@@ -14,29 +12,38 @@ def is_path_safe(path):
 
     >>> is_path_safe("/etc/passwd")
     False
-    >>> isinstance(cat(__file__), str)
-    True
     """
     return not (path.startswith("/") or ".." in path)
 
 
 def cat(path):
-    """
-    Read the contents of a file and return it as a string, or return an error message if the file cannot be accessed.
+    r"""Return the contents of a text file, or an error string if the file cannot be read.
 
-    >>> cat("nonexistent_file.txt")
+    >>> cat('test_files/hello.txt')
+    'hello world'
+
+    >>> print(cat('test_files/multiline.txt'))
+    hello world
+    hola mundo
+    salve munde
+
+    Returns an error when the file does not exist.
+
+    >>> cat('test_files/does_not_exist.txt')
     'Error: file not found'
 
-    >>> cat("../secret.txt")
-    'Error: unsafe path'
+    Returns an error when the path is a directory.
 
-    >>> cat(".")
+    >>> cat('.')
     'Error: could not read file'
 
-    # gross test case; you should pick a file that you can actually
-    # show the output of
-    >>> cat("tools/cat.py") != ""
-    True
+    Does not support absolute paths or directory traversal.
+
+    >>> cat('/etc/passwd')
+    'Error: unsafe path'
+
+    >>> cat('../secret.txt')
+    'Error: unsafe path'
     """
     if not is_path_safe(path):
         return "Error: unsafe path"

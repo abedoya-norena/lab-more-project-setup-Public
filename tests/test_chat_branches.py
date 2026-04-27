@@ -7,6 +7,7 @@
 # in the age of AI because if you are asking an AI to work on 
 # a function, you want the AI to know what the test cases are
 # for the function as well
+import sys
 import types
 import subprocess
 import os
@@ -46,7 +47,7 @@ def test_send_message_compact_tool_call_debug(monkeypatch, capsys):
         return calls.pop(0)
 
     monkeypatch.setattr(chat_instance.client.chat.completions, "create", fake_create)
-    monkeypatch.setattr(chat, "compact", lambda messages: "condensed summary")
+    monkeypatch.setitem(chat.AVAILABLE_FUNCTIONS, "compact", lambda messages: "condensed summary")
 
     result = chat_instance.send_message("please compact this", temperature=0.0)
     output = capsys.readouterr().out
@@ -67,6 +68,9 @@ def test_repl_slash_command_branches_with_debug(monkeypatch, capsys):
             "/calculate",
             "/calculate 3*3",
             "/compact",
+            "/doctests",
+            "/doctests tools/calculate.py",
+            "/rm",
             "/unknown",
         ]
     )
@@ -79,6 +83,7 @@ def test_repl_slash_command_branches_with_debug(monkeypatch, capsys):
 
     monkeypatch.setattr("builtins.input", fake_input)
     monkeypatch.setattr(chat, "compact", lambda messages: "short context")
+    monkeypatch.setitem(chat.AVAILABLE_FUNCTIONS, "compact", lambda messages: "short context")
 
     chat.repl(debug=True)
     output = capsys.readouterr().out
@@ -92,6 +97,9 @@ def test_repl_slash_command_branches_with_debug(monkeypatch, capsys):
     assert "[tool] /calculate 3*3" in output
     assert "[tool] /compact" in output
     assert "short context" in output
+    assert "Usage: /doctests <file>" in output
+    assert "[tool] /doctests tools/calculate.py" in output
+    assert "Usage: /rm <path>" in output
     assert "Unknown command" in output
 
 
@@ -108,7 +116,7 @@ def test_main_entrypoint_with_and_without_message():
     # putting integration tests in shell scripts is cleaner
     # (1 line instead of 20ish lines)
     proc1 = subprocess.run(
-        ["python3", "chat.py"],
+        [sys.executable, "chat.py"],
         input="",
         text=True,
         capture_output=True,
@@ -118,7 +126,7 @@ def test_main_entrypoint_with_and_without_message():
 
     # Case 2: with message
     proc2 = subprocess.run(
-        ["python3", "chat.py", "hello", "there"],
+        [sys.executable, "chat.py", "hello", "there"],
         text=True,
         capture_output=True,
         env=env,

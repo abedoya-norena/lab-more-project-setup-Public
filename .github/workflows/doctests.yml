@@ -17,13 +17,18 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Configure git user
+        run: |
+          git config user.email "ci@docchat.test"
+          git config user.name "docchat CI"
+
       - name: Install dependencies
         run: |
-          pip install pytest coverage python-dotenv groq
+          pip install pytest coverage python-dotenv groq gitpython openai
 
       - name: Run doctests with coverage
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          coverage run -m pytest chat.py --doctest-modules
+          coverage run -m pytest chat.py tools/ --doctest-modules
           coverage report -m

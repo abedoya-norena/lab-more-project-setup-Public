@@ -1,39 +1,51 @@
-"""
-This file defines the compact tool, which summarizes chat history into a short system message.
-"""
+"""This file defines the compact tool, which summarizes chat history into a short system message."""
 
 import json
 
 
-def compact(messages):
-    # if you pass in the chat object here instead of messages,
-    # you don't have to have the awkward special cases inside
-    # the send_message function; you can do all that work here
-    """
-    Summarize a conversation history into 1-5 concise lines.
+def _clean_messages(messages):
+    """Convert a list of messages to plain dicts with role and content fields.
 
-    >>> tool_schema["function"]["name"]
-    'compact'
-    """
-    from chat import Chat
+    ChatCompletionMessage objects (from the Groq SDK) are converted alongside plain dicts.
 
-    subagent = Chat()
-    clean_messages = []
+    >>> _clean_messages([{"role": "user", "content": "hello"}])
+    [{'role': 'user', 'content': 'hello'}]
+
+    >>> _clean_messages([{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}])
+    [{'role': 'user', 'content': 'hi'}, {'role': 'assistant', 'content': 'hello'}]
+    """
+    clean = []
     for m in messages:
         if isinstance(m, dict):
             role = m.get("role", "")
             content = m.get("content", "")
         else:
-            # handle ChatCompletionMessage objects
             role = getattr(m, "role", "")
             content = getattr(m, "content", "")
-        clean_messages.append({"role": role, "content": content})
+        clean.append({"role": role, "content": content})
+    return clean
 
-    serialized_messages = json.dumps(clean_messages, ensure_ascii=False)
+
+def compact(messages):
+    """Summarize a conversation history into 1-5 concise lines.
+
+    Because compact calls the LLM, the output is nondeterministic.
+    The schema name identifies this tool to the model.
+
+    >>> tool_schema["function"]["name"]
+    'compact'
+
+    >>> tool_schema["function"]["parameters"]["required"]
+    []
+    """
+    from chat import Chat
+
+    subagent = Chat()
+    serialized = json.dumps(_clean_messages(messages), ensure_ascii=False)
     summary_request = (
         "Summarize this conversation in 1-5 concise lines. "
         "Capture only key context and decisions.\n\n"
-        f"Conversation:\n{serialized_messages}"
+        f"Conversation:\n{serialized}"
     )
 
     subagent.messages = [

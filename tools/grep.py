@@ -1,35 +1,39 @@
-"""
-This file defines the grep tool, which searches for a regex pattern in files and returns matching lines while preventing unsafe path access.
-"""
+"""This file defines the grep tool, which searches for a regex pattern in files and returns matching lines while preventing unsafe path access."""
 
 import re
 import glob
 import os
 from tools.cat import is_path_safe
-# it's very ugly to have the same function duplicated in multiple
-# files; you can just import the function
+
 
 def grep(pattern, path):
-    """
-    Search for a regex pattern in files and return matching lines joined by newlines.
+    """Search for a regex pattern in files and return matching lines joined by newlines.
 
-    >>> grep("anything", "../")
-    'Error: unsafe path'
+    >>> grep('hello', 'test_files/hello.txt')
+    'hello world'
 
-    >>> grep("THIS_WILL_NOT_MATCH_123", "nonexistent_file.txt")
+    >>> grep('NOTFOUND_XYZ', 'test_files/hello.txt')
     ''
 
-    # these test cases are gross; grep is fully deterministic
-    # and so there is no reason not to put the actual output
-    # of your functions here
-    >>> isinstance(grep("pattern", "nonexistent_file.txt"), str)
-    True
+    Only lines that match the pattern are returned.
 
-    >>> isinstance(grep("test", "."), str)
-    True
+    >>> grep('^hello', 'test_files/multiline.txt')
+    'hello world'
 
-    >>> isinstance(grep(".*", __file__), str)
-    True
+    Searching a directory scans all files inside it; subdirectories are silently skipped.
+
+    >>> grep('salve', 'test_files')
+    'salve munde'
+
+    Returns an empty string when the file does not exist.
+
+    >>> grep('anything', 'nonexistent_file.txt')
+    ''
+
+    Does not support absolute paths or directory traversal.
+
+    >>> grep('anything', '../')
+    'Error: unsafe path'
     """
     if not is_path_safe(path):
         return "Error: unsafe path"

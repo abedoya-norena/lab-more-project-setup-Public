@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import os
 
@@ -5,8 +6,9 @@ import os
 def run_chat(input_text):
     env = os.environ.copy()
     env["GROQ_API_KEY"] = "test"
+    env["PYTHONUNBUFFERED"] = "1"
     proc = subprocess.run(
-        ["python3", "chat.py"],
+        [sys.executable, "chat.py"],
         input=input_text,
         text=True,
         capture_output=True,
