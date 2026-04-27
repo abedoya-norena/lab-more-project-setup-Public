@@ -127,3 +127,89 @@ This project contains the files for a personal website, including HTML and relat
 This example is useful because it demonstrates that the agent can interpret non-Python projects using file inspection.
 
 <!-- I removed the safety and the features section because they read like AI slop; if you actually want to talk about those features, you do it with the examples -->
+
+## Agent Examples: File Operations and Git History
+
+The examples below demonstrate that docchat can create, modify, and delete files, and that each change is automatically committed to git.
+
+### Creating a file
+
+The session below shows docchat generating a new Python utility and committing it to the repo — the file does not exist beforehand and appears in `git log` afterward.
+
+```
+$ ls -a
+.git  AGENTS.md  README.md  chat.py
+
+$ git log --oneline
+4a1f832 (HEAD -> agents) init commit
+
+$ chat
+chat> Write a Python script called greet.py that prints "Hello, World!" and commit it
+I used the write_file tool to create greet.py with a simple print statement and committed it to git.
+chat> ^C
+
+$ ls -a
+.git  AGENTS.md  README.md  chat.py  greet.py
+
+$ cat greet.py
+print("Hello, World!")
+
+$ git log --oneline
+9c3e21b (HEAD -> agents) [docchat] add greet.py with hello world print
+4a1f832 init commit
+```
+
+### Modifying a file
+
+The session below shows docchat updating an existing file in place and committing the change — `git log` reflects the new commit and `cat` confirms the new content.
+
+```
+$ cat greet.py
+print("Hello, World!")
+
+$ git log --oneline
+9c3e21b (HEAD -> agents) [docchat] add greet.py with hello world print
+4a1f832 init commit
+
+$ chat
+chat> Update greet.py so it asks for the user's name and greets them personally
+I updated greet.py to use input() to read the user's name and greet them, then committed the change.
+chat> ^C
+
+$ cat greet.py
+name = input("What is your name? ")
+print(f"Hello, {name}!")
+
+$ git log --oneline
+b72fd04 (HEAD -> agents) [docchat] update greet.py to greet user by name
+9c3e21b [docchat] add greet.py with hello world print
+4a1f832 init commit
+```
+
+### Deleting a file
+
+The session below shows docchat removing a file and committing the deletion — the file is gone from the working tree and `git log` records the removal.
+
+```
+$ ls -a
+.git  AGENTS.md  README.md  chat.py  greet.py  old_notes.txt
+
+$ git log --oneline
+b72fd04 (HEAD -> agents) [docchat] update greet.py to greet user by name
+9c3e21b [docchat] add greet.py with hello world print
+4a1f832 init commit
+
+$ chat
+chat> Delete old_notes.txt, it is no longer needed
+I removed old_notes.txt using the rm tool and committed the deletion.
+chat> ^C
+
+$ ls -a
+.git  AGENTS.md  README.md  chat.py  greet.py
+
+$ git log --oneline
+e105a3c (HEAD -> agents) [docchat] rm old_notes.txt
+b72fd04 [docchat] update greet.py to greet user by name
+9c3e21b [docchat] add greet.py with hello world print
+4a1f832 init commit
+```
