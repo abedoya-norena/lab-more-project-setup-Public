@@ -28,6 +28,7 @@ def ls(path="."):
     >>> ls("../")
     'Error: unsafe path'
 
+    # once again, gross test case
     >>> isinstance(ls("nonexistent_dir_abc"), str)
     True
 

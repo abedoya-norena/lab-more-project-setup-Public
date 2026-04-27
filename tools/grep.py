@@ -5,22 +5,9 @@ This file defines the grep tool, which searches for a regex pattern in files and
 import re
 import glob
 import os
-
-def is_path_safe(path):
-    """
-    Check whether a file path is safe by rejecting absolute paths and directory traversal.
-
-    >>> is_path_safe("file.txt")
-    True
-
-    >>> is_path_safe("../secret.txt")
-    False
-
-    >>> is_path_safe("/etc/passwd")
-    False
-    """
-    return not (path.startswith("/") or ".." in path)
-
+from tools.cat import is_path_safe
+# it's very ugly to have the same function duplicated in multiple
+# files; you can just import the function
 
 def grep(pattern, path):
     """
@@ -32,6 +19,9 @@ def grep(pattern, path):
     >>> grep("THIS_WILL_NOT_MATCH_123", "nonexistent_file.txt")
     ''
 
+    # these test cases are gross; grep is fully deterministic
+    # and so there is no reason not to put the actual output
+    # of your functions here
     >>> isinstance(grep("pattern", "nonexistent_file.txt"), str)
     True
 

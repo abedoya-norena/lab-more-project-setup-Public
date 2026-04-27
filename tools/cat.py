@@ -33,6 +33,8 @@ def cat(path):
     >>> cat(".")
     'Error: could not read file'
 
+    # gross test case; you should pick a file that you can actually
+    # show the output of
     >>> cat("tools/cat.py") != ""
     True
     """

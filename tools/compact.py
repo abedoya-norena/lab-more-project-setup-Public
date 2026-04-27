@@ -6,6 +6,9 @@ import json
 
 
 def compact(messages):
+    # if you pass in the chat object here instead of messages,
+    # you don't have to have the awkward special cases inside
+    # the send_message function; you can do all that work here
     """
     Summarize a conversation history into 1-5 concise lines.
 

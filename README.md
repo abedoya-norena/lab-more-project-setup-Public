@@ -1,103 +1,89 @@
 # Command-Line AI Agent with Tool Integration
 
-This project provides a command-line chat agent that integrates with a language model and supports tool-based interactions for file operations and calculations. Users can interact using natural language or explicit slash commands, with tab completion enhancing usability and efficiency.
-
-
-## Badges
-
 ![Doctests](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/doctests.yml/badge.svg)
 ![Integration](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/integration.yml/badge.svg)
 ![Flake8](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/flake8.yml/badge.svg)
 ![PyPI](https://img.shields.io/pypi/v/cmc-csci005-alejandro)
-![Coverage](https://img.shields.io/badge/coverage-%3E90%25-brightgreen)
 
+<!-- your coverage badge is wrong for two reasons:
+1. it shows 90% coverage, but your actual coverage report on github actions shows only 59% coverage :(
+2. it is hardcoded and not automatically updated; coverage.io generates a badge that is automatically updated
+--> 
 
-## Demo
+This project provides a command-line chat agent that integrates with a language model and supports tool-based interactions for file operations and calculations. Users can interact using natural language or explicit slash commands, with tab completion enhancing usability and efficiency.
 
 ![Demo GIF](demo.gif)
 
-## Features
-
-- Chat with a language model in a REPL interface  
-- Tool integration:
-  - `/ls` list directory contents  
-  - `/cat` display file contents  
-  - `/grep` search within files  
-  - `/calculate` evaluate expressions  
-  - `/compact` summarize and compress chat history  
-- Automatic tool calling by the model  
-- Debug mode for visualizing tool usage  
-- Support for multiple model providers  
-- Command-line message execution  
-- Tab completion for commands and file paths  
-
 ## Installation
 
+<!-- your installation instructions below are incorrect;
+if you follow these commands, then the usage commands will not work
+(you never did `pip install .`; and if you do that,
+there is no need to manually install dependencies)
+-->
 Clone the repository and install dependencies:
 
 ```bash
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 Set your API keys depending on the provider:
 
 ```bash
-export GROQ_API_KEY=your_key_here
-export OPENROUTER_API_KEY=your_key_here
+$ export GROQ_API_KEY=your_key_here
+$ export OPENROUTER_API_KEY=your_key_here
 ```
 
 ## Usage
 
-### Interactive Mode (REPL)
-
+You need a sentence introducing every code block (### titles not good form);
+you also need to include the `$` in front of every shell command;
+(it is sometimes acceptable to not include the `$` if every code block on a page is only a shell command with no output, but that is not the case here, so you need the `$` on your commands)
 ```bash
-chat
-
+$ chat
 chat> what files are in the .github folder?
 The only file in this folder is the workflows subfolder.
 ```
 
-### Command-Line Mode
-
 You can pass a message directly:
 
 ```bash
-chat "what files are in the .github folder?"
+$ chat "what files are in the .github folder?"
 The only file in this folder is the workflows subfolder.
 ...
 ```
 
-### Provider Selection
-
 Specify which model provider to use:
 
 ```bash
-chat --provider openai
-chat --provider anthropic
-chat --provider google
-chat --provider groq
-...
+$ chat --provider openai
+chat> What model are you?
+I am GPT5.2 provided by OpenAI
 ```
+<!-- notice how the code block is an exact example of something that could be copy/pasted from a terminal; it shows both what the user typed in and the possible output;
+also notice in the list below, anything that a user could type into a terminal need to be in backticks -->
 Supported providers:
-
-- groq (default)
-- openai
-- anthropic
-- google
+- `groq` (default)
+- `openai`
+- `anthropic`
+- `google`
 
 ### Debug Mode
 
 Debug mode prints tool usage whenever a tool is invoked.
 
+<!-- why `python3 chat.py` here and just `chat` elsewhere? -->
 ```bash
-python3 chat.py --debug
-
+$ chat --debug
 chat> /ls .github  
 [tool] /ls .github  
 The only file in this folder is the workflows subfolder.
 ```
 
-## Usage Examples
+## Example Queries on Projects
+
+You should never have a section without a sentence in it;
+the examples above are also usage examples, so this section needed a more descriptive title
 
 ### Markdown Compiler
 
@@ -140,8 +126,4 @@ This project contains the files for a personal website, including HTML and relat
 ```
 This example is useful because it demonstrates that the agent can interpret non-Python projects using file inspection.
 
-## Safety
-
-- Tools are restricted to the current directory  
-- Absolute paths are not allowed  
-- Directory traversal (`..`) is blocked  
+<!-- I removed the safety and the features section because they read like AI slop; if you actually want to talk about those features, you do it with the examples -->

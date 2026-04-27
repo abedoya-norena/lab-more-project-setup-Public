@@ -1,4 +1,4 @@
-name: integration
+tname: integration
 
 on: [push]
 

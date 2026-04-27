@@ -1,8 +1,7 @@
 """
 This file defines the Chat class and REPL interface for interacting with the language model and available tools.
 
->>> print("[tool] /ls .github")
-[tool] /ls .github
+# this doctest didn't actually test anything about your code
 """
 
 import argparse
@@ -20,13 +19,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# in pytohn class names are in CamelCase;
+# in python class names are in CamelCase;
 # non-class names (e.g. functions/variables) are in snake_case
 class Chat:
     """
     This class manages a conversation with a language model and integrates tool usage such as calculate, ls, cat, and grep.
     It maintains message history and handles tool calls automatically when the model requests them.
 
+    # these are all decent tests
     >>> chat = Chat()
     >>> "Bob" in chat.send_message('my name is bob', temperature=0.0)
     True
@@ -64,30 +64,20 @@ class Chat:
         self.debug = debug
         self.messages = [
                 {
-                    # most important content for sys prompt is length of response
                     "role": "system",
                     "content": "Write the output in 1-2 sentences. Talk like pirate. Always use tools to complete tasks when appropriate"
                 },
             ]
+
     def send_message(self, message, temperature=0.8):
         """
         Send a message to the language model, handle any tool calls, and return the model's response.
 
-        >>> chat = Chat()
-        >>> response = chat.send_message("2+2", temperature=0.0)
-        >>> isinstance(response, str)
-        True
-
-        >>> chat = Chat()
-        >>> initial_len = len(chat.messages)
-        >>> _ = chat.send_message("hello", temperature=0.0)
-        >>> len(chat.messages) > initial_len
-        True
-
-        >>> chat = Chat()
-        >>> response = chat.send_message("say hi", temperature=0.0)
-        >>> isinstance(response, str)
-        True
+        # these test cases were not good;
+        # they don't help me as a reader understand what your code
+        # does, and just testing that the type is a string
+        # is unlikely to catch any bugs;
+        # the tests in the Chat docstring above are better
         """
         self.messages.append(
             {
@@ -99,11 +89,6 @@ class Chat:
         )
 
         tools = [calculate_schema, ls_schema, cat_schema, grep_schema, compact_schema]
-        # in order to make non-deterministic code deterministic;
-        # in general very hard CS problem;
-        # in this case, has a "temperature" param that controls randomness;
-        # the higher the value, the more randomness;
-        # hihgher temperature => more creativity
         chat_completion = self.client.chat.completions.create(
             messages=self.messages,
             model= self.MODEL,
@@ -115,7 +100,14 @@ class Chat:
 
         response_message = chat_completion.choices[0].message
         tool_calls = response_message.tool_calls
-        
+
+        # The Step annotations that you have here is the correct
+        # style for annotating comments; I like to think of blocks
+        # of code like "paragraphs" and the comments like
+        # "topic sentences" that let me skim to see what I should
+        # read/not read I've deleted a handful of "bad" comments
+        # (that I realize you had because I typed it in lecture)
+        # but these shouldn't make it into a "production" system
         # Step 2: Check if the model wants to call tools
         if tool_calls:
             # Map function names to implementations
@@ -142,6 +134,13 @@ class Chat:
                     print(f"[tool] /{function_name} {tool_call.function.arguments}")
                 function_response = function_to_call(**function_args)
 
+                # what you have here for the compact code is not
+                # strictly "wrong", but it's a bit awkward to have
+                # special cases for handling certain tools;
+                # it would have been better if all this functionality
+                # could have been handled within just the compact
+                # tool, but that admittedly required some
+                # out-of-the-box thinking
                 if function_name == "compact":
                     self.messages = [{"role": "system", "content": function_response}]
                     compacted_summary = function_response
@@ -195,7 +194,14 @@ def repl(temperature=0.8, debug=False, provider="groq"):
     >>> builtins.input = monkey_input
     >>> repl(temperature=0.0)  # doctest: +ELLIPSIS
     chat> Hello, I am monkey.
-    ...
+    # these are not great test cases here because you are not
+    # actually viewing the output of the code at all;
+    # so what are you actually testing?
+    # this one is admitedly hard to test because of nondeterminism
+    # but that just means you probably shouldn't include the test;
+    # the other tests that are testing your slash commands
+    # are all deterministic and so the output should be directly
+    # included
     chat> Goodbye.
     ...
     <BLANKLINE>
@@ -265,9 +271,18 @@ def repl(temperature=0.8, debug=False, provider="groq"):
     <BLANKLINE>
     """
 
+    # it would be cleaner to build this directly from the tools;
+    # possibly as a global that both locations can use
     commands = ["/ls", "/cat", "/grep", "/calculate", "/compact", "/help"]
 
     def completer(text, state):
+        # this should have been a global function;
+        # as a global function, you could have written test cases
+        # these test cases not involve any io/non-determinism,
+        # and so it would be easy to test and prove correct;
+        # as a local function, there is no way for the reader
+        # to understand what the function is doing or verify
+        # it is correct
         line = readline.get_line_buffer()
         if not line.startswith("/"):
             matches = []
@@ -293,6 +308,12 @@ def repl(temperature=0.8, debug=False, provider="groq"):
                 if user_input == "/help":
                     print("Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact")
 
+                # it's not "wrong" to have separate if
+                # statements for all of your commands,
+                # but it duplicates a lot of code and makes
+                # adding new commands a bit of a chore;
+                # it would be possible to factor this all out
+                # (and I believe the groq docs have examples)
                 elif user_input.startswith("/ls"):
                     parts = user_input.split()
                     path = parts[1] if len(parts) > 1 else "."
@@ -353,28 +374,9 @@ def repl(temperature=0.8, debug=False, provider="groq"):
     except (KeyboardInterrupt, EOFError):
         print()
 
-def _debug_test():
-    """
-    >>> debug = True
-    >>> if debug:
-    ...     print("[tool] /ls .github")
-    [tool] /ls .github
-    """
-def _argparse_test():
-    """
-    >>> import argparse
-    >>> parser = argparse.ArgumentParser()
-    >>> _ = parser.add_argument("--debug", action="store_true")
-    >>> args = parser.parse_args([])
-    >>> args.debug
-    False
-    """
-def some_helper(x):
-    """
-    >>> some_helper("test")
-    'test'
-    """
-    return x
+# none of these functions were doing anything;
+# and the doctests were not actually testing your code;
+# we call this "dead code" and it should always be removed
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

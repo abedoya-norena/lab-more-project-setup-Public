@@ -1,3 +1,12 @@
+# in general, I strongly discourage putting tests in separate files
+# instead of in doctests; one of the major points of testing
+# is to help ensure that the reader understand the purpose of a 
+# function, and if you bury the tests in these other files,
+# then the reader will have no idea where to look for the tests;
+# keeping tests close to their source code is doubly important
+# in the age of AI because if you are asking an AI to work on 
+# a function, you want the AI to know what the test cases are
+# for the function as well
 import types
 import subprocess
 import os
@@ -91,6 +100,13 @@ def test_main_entrypoint_with_and_without_message():
     env["GROQ_API_KEY"] = "test"
 
     # Case 1: no message (REPL exits immediately)
+    # anytime you are tempted to use subprocess.run in a test case
+    # this should really be in a shell script;
+    # (subprocess.run invokes a shell to run the command)
+    # "integration tests" are the only reason to use separate
+    # files in this style, and at least for this assignment
+    # putting integration tests in shell scripts is cleaner
+    # (1 line instead of 20ish lines)
     proc1 = subprocess.run(
         ["python3", "chat.py"],
         input="",
