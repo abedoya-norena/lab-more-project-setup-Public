@@ -22,8 +22,8 @@ jobs:
 
       - name: Configure git user
         run: |
-          git config user.email "ci@docchat.test"
-          git config user.name "docchat CI"
+          git config user.email "abedoya28@students.claremontmckenna.edu"
+          git config user.name "abedoya-norena"
 
       - name: Install dependencies
         run: |
