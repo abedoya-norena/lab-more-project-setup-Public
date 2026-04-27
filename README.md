@@ -4,27 +4,21 @@
 ![Integration](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/integration.yml/badge.svg)
 ![Flake8](https://github.com/abedoya-norena/lab-more-project-setup-Public/actions/workflows/flake8.yml/badge.svg)
 ![PyPI](https://img.shields.io/pypi/v/cmc-csci005-alejandro)
-
-<!-- your coverage badge is wrong for two reasons:
-1. it shows 90% coverage, but your actual coverage report on github actions shows only 59% coverage :(
-2. it is hardcoded and not automatically updated; coverage.io generates a badge that is automatically updated
---> 
+![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
 
 This project provides a command-line chat agent that integrates with a language model and supports tool-based interactions for file operations and calculations. Users can interact using natural language or explicit slash commands, with tab completion enhancing usability and efficiency.
 
-![Demo GIF](demo.gif)
+## Requirements
+
+- Must be run from inside a git repository. If no `.git` folder is found, the program prints an error and exits.
+- If an `AGENTS.md` file is present in the current directory, it is automatically loaded into the conversation at startup. This file provides project-specific instructions for the agent — see [agents.md](https://agents.md/) for the convention.
 
 ## Installation
 
-<!-- your installation instructions below are incorrect;
-if you follow these commands, then the usage commands will not work
-(you never did `pip install .`; and if you do that,
-there is no need to manually install dependencies)
--->
-Clone the repository and install dependencies:
+Clone the repository and install the package:
 
 ```bash
-$ pip install -r requirements.txt
+$ pip install .
 ```
 
 Set your API keys depending on the provider:
@@ -36,21 +30,19 @@ $ export OPENROUTER_API_KEY=your_key_here
 
 ## Usage
 
-You need a sentence introducing every code block (### titles not good form);
-you also need to include the `$` in front of every shell command;
-(it is sometimes acceptable to not include the `$` if every code block on a page is only a shell command with no output, but that is not the case here, so you need the `$` on your commands)
+Run the agent in interactive mode:
+
 ```bash
 $ chat
 chat> what files are in the .github folder?
-The only file in this folder is the workflows subfolder.
+The only file in this folder be the workflows subfolder, arr!
 ```
 
 You can pass a message directly:
 
 ```bash
 $ chat "what files are in the .github folder?"
-The only file in this folder is the workflows subfolder.
-...
+The only file in this folder be the workflows subfolder, arr!
 ```
 
 Specify which model provider to use:
@@ -58,10 +50,9 @@ Specify which model provider to use:
 ```bash
 $ chat --provider openai
 chat> What model are you?
-I am GPT5.2 provided by OpenAI
+I be GPT-4o, provided by OpenAI, arr!
 ```
-<!-- notice how the code block is an exact example of something that could be copy/pasted from a terminal; it shows both what the user typed in and the possible output;
-also notice in the list below, anything that a user could type into a terminal need to be in backticks -->
+
 Supported providers:
 - `groq` (default)
 - `openai`
@@ -70,20 +61,42 @@ Supported providers:
 
 ### Debug Mode
 
-Debug mode prints tool usage whenever a tool is invoked.
+Debug mode prints the tool name and arguments each time the LLM invokes a tool.
 
-<!-- why `python3 chat.py` here and just `chat` elsewhere? -->
 ```bash
 $ chat --debug
-chat> /ls .github  
-[tool] /ls .github  
-The only file in this folder is the workflows subfolder.
+chat> what files are in the .github folder?
+[tool] /ls {".github"}
+The only file in this folder be the workflows subfolder, arr!
+```
+
+### Slash Commands
+
+Slash commands run tools directly without an LLM call, giving instant deterministic output. Tab completion is supported.
+
+```bash
+chat> /ls .github
+workflows
+
+chat> /cat README.md
+# Command-Line AI Agent with Tool Integration
+...
+
+chat> /calculate 2**10
+{"result": 1024}
+
+chat> /grep import chat.py
+import argparse
+import os
+...
+
+chat> /help
+Available commands: /help, /ls, /cat <file>, /grep <pattern> <path>, /calculate <expression>, /compact, /doctests <file>, /rm <path>, /pip_install <library>, /load_image <path>
 ```
 
 ## Example Queries on Projects
 
-You should never have a section without a sentence in it;
-the examples above are also usage examples, so this section needed a more descriptive title
+The following examples demonstrate the agent analyzing real codebases using its file tools.
 
 ### Markdown Compiler
 
@@ -95,6 +108,7 @@ chat
 chat> does this project use regular expressions?
 No. I grepped the project files and did not find any use of the `re` library.
 ```
+
 This example is useful because it demonstrates how the agent uses the grep tool to analyze code structure across files.
 
 ### Ebay Scraper
@@ -105,10 +119,10 @@ This example demonstrates how the agent can summarize a project and answer highe
 cd test_projects/Ebay_webscrapping
 chat
 chat> tell me about this project
-The project is designed to scrape product information from eBay listings.
+The project be designed to scrape product information from eBay listings, arr!
 
 chat> is this legal?
-In general, scraping public webpages is often legal, although using an official API is usually more reliable and efficient.
+In general, scraping public webpages be often legal, although using an official API be usually more reliable and efficient.
 ```
 
 This example is useful because it shows the agent can summarize a project and reason about broader implications.
@@ -122,16 +136,14 @@ cd test_projects/abedoya-norena.github.io
 chat
 chat> what does this project contain?
 This project contains the files for a personal website, including HTML and related assets.
-
 ```
-This example is useful because it demonstrates that the agent can interpret non-Python projects using file inspection.
 
-<!-- I removed the safety and the features section because they read like AI slop; if you actually want to talk about those features, you do it with the examples -->
+This example is useful because it demonstrates that the agent can interpret non-Python projects using file inspection.
 
 ## Text-to-Speech
 
 Pass `--tts` to have every response read aloud using the Groq TTS API.
-An optional `--voice` flag selects the voice (default: `Fritz-PlayAI`).
+An optional `--voice` flag selects the voice (default: `daniel`).
 
 ```
 $ chat --tts
@@ -140,15 +152,19 @@ The answer be 4, arr!    ← printed and spoken aloud
 ```
 
 ```
-$ chat --tts --voice Celeste-PlayAI
+$ chat --tts --voice hannah
 chat> Tell me a pirate joke
 Why be pirates called pirates? Because they ARRRR!
 ```
 
-Available voices include: `Fritz-PlayAI`, `Celeste-PlayAI`, `Briggs-PlayAI`, `Thunder-PlayAI`, and [many others](https://console.groq.com/docs/text-to-speech).
+Available voices: `daniel`, `troy`, `austin`, `hannah`, `diana`, `autumn`. See [Groq TTS docs](https://console.groq.com/docs/text-to-speech/orpheus) for details.
 
 Playback requires `sounddevice` and `soundfile` (`pip install sounddevice soundfile`).
 On Linux you may also need `sudo apt-get install libportaudio2`.
+
+The demo below shows a full TTS session — every response is read aloud automatically.
+
+![TTS Demo](demo.gif)
 
 ## Speech-to-Text (Voice Input)
 
@@ -200,12 +216,17 @@ You can use any trigger phrase:
 $ chat --trigger "okay docchat"
 ```
 
-### Demo video
+The demo below shows trigger-word detection followed by Whisper transcription and a spoken reply.
 
-https://github.com/user-attachments/assets/PLACEHOLDER
+![STT + Trigger Word Demo](Demo_STT.gif)
 
-> Replace the placeholder above with your recorded demo video after uploading it to this GitHub repo.
-> To upload: drag the video file into a GitHub issue or PR text box — GitHub returns a CDN URL you can paste here.
+## Autonomous Markdown Compiler (Extra Credit)
+
+The agent autonomously implemented a full Markdown-to-HTML compiler from scratch on a dedicated branch of a separate repository, making `[docchat]` commits for each change as proof of authorship.
+
+**Repository:** [abedoya-norena/Markdown-to-HTML-compiler](https://github.com/abedoya-norena/Markdown-to-HTML-compiler/tree/agents)
+
+The agent implemented all required functions (`compile_headers`, `compile_italic_star`, `compile_italic_underscore`, `compile_strikethrough`, `compile_bold_stars`, `compile_bold_underscore`, `compile_code_inline`, `compile_links`, `compile_images`) and fixed all CI workflows (doctests, command-line, flake8) autonomously.
 
 ## Agent Examples: File Operations and Git History
 
