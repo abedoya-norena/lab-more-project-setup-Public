@@ -33,7 +33,7 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          coverage run -m pytest chat.py tools/ --doctest-modules
+          coverage run -m pytest chat.py tools/ tests/ --doctest-modules
           coverage report -m
 
       - name: Update coverage badge in README
